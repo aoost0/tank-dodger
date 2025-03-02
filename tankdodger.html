@@ -1,4 +1,7 @@
-<e="viewport" content="width=device-width, initial-scale=1.0">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rocket Dodger - Space Edition</title>
     <style>
         body {
@@ -17,14 +20,21 @@
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
 
         let rocket = { x: canvas.width / 2, y: canvas.height - 100, width: 50, height: 80, speed: 7 };
         let asteroids = [];
         let stars = [];
         let gameRunning = true;
         let explosionFrame = 0;
+        let moveLeft = false;
+        let moveRight = false;
 
         function createStars() {
             for (let i = 0; i < 100; i++) {
@@ -43,8 +53,6 @@
                 ctx.beginPath();
                 ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
                 ctx.fill();
-
-                // Make stars slowly move down
                 star.y += star.speed;
                 if (star.y > canvas.height) {
                     star.y = 0;
@@ -61,18 +69,13 @@
             ctx.lineTo(rocket.x, rocket.y + rocket.height);
             ctx.closePath();
             ctx.fill();
-
-            // Rocket window
             ctx.fillStyle = "lightblue";
             ctx.beginPath();
             ctx.arc(rocket.x + rocket.width / 2, rocket.y + 20, 10, 0, Math.PI * 2);
             ctx.fill();
-
-            // Rocket fins
             ctx.fillStyle = "red";
             ctx.fillRect(rocket.x - 10, rocket.y + rocket.height - 20, 15, 20);
             ctx.fillRect(rocket.x + rocket.width - 5, rocket.y + rocket.height - 20, 15, 20);
-
             drawFlame(rocket.x + rocket.width / 2, rocket.y + rocket.height, 20);
         }
 
@@ -101,7 +104,7 @@
         }
 
         function drawAsteroid(asteroid) {
-            ctx.fillStyle = "#A29B8D"; // Grayish space rock
+            ctx.fillStyle = "#A29B8D";
             ctx.beginPath();
             ctx.arc(asteroid.x, asteroid.y, asteroid.size / 2, 0, Math.PI * 2);
             ctx.fill();
@@ -155,23 +158,28 @@
         }
 
         function showGameOverMessage() {
-            ctx.fillStyle = "rgba(0, 0, 0, 0.7)"; // Dark transparent background
+            ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
             ctx.fillRect(0, canvas.height / 3, canvas.width, 200);
-            
             ctx.fillStyle = "white";
             ctx.font = "50px Arial";
             ctx.textAlign = "center";
             ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
-            
             ctx.font = "25px Arial";
-            const restartMessage = navigator.platform.includes("Mac") ? "Press ⌘ + R to Restart" : "Press F5 to Restart";
-            ctx.fillText(restartMessage, canvas.width / 2, canvas.height / 2 + 40);
+            ctx.fillText("Tap to Restart", canvas.width / 2, canvas.height / 2 + 40);
+
+            canvas.addEventListener("click", () => location.reload());
+        }
+
+        function updateRocket() {
+            if (moveLeft && rocket.x > 0) rocket.x -= rocket.speed;
+            if (moveRight && rocket.x + rocket.width < canvas.width) rocket.x += rocket.speed;
         }
 
         function gameLoop() {
             if (!gameRunning) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawStars();
+            updateRocket();
             drawRocket();
             updateAsteroids();
             checkCollisions();
@@ -182,8 +190,24 @@
         }
 
         document.addEventListener("keydown", (event) => {
-            if (event.key === "ArrowLeft" && rocket.x > 0) rocket.x -= rocket.speed;
-            if (event.key === "ArrowRight" && rocket.x + rocket.width < canvas.width) rocket.x += rocket.speed;
+            if (event.key === "ArrowLeft") moveLeft = true;
+            if (event.key === "ArrowRight") moveRight = true;
+        });
+
+        document.addEventListener("keyup", (event) => {
+            if (event.key === "ArrowLeft") moveLeft = false;
+            if (event.key === "ArrowRight") moveRight = false;
+        });
+
+        canvas.addEventListener("touchstart", (event) => {
+            let touchX = event.touches[0].clientX;
+            moveLeft = touchX < canvas.width / 2;
+            moveRight = touchX > canvas.width / 2;
+        });
+
+        canvas.addEventListener("touchend", () => {
+            moveLeft = false;
+            moveRight = false;
         });
 
         createStars();

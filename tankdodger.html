@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -35,6 +36,7 @@
         let explosionFrame = 0;
         let moveLeft = false;
         let moveRight = false;
+        let score = 0;  // 🏆 Score starts at 0
 
         function createStars() {
             for (let i = 0; i < 100; i++) {
@@ -111,10 +113,12 @@
         }
 
         function updateAsteroids() {
-            for (let i = 0; i < asteroids.length; i++) {
+            for (let i = asteroids.length - 1; i >= 0; i--) {
                 asteroids[i].y += asteroids[i].speed;
+
                 if (asteroids[i].y > canvas.height) {
                     asteroids.splice(i, 1);
+                    score += 10;  // 🏆 Earn points for dodging asteroids
                 }
             }
         }
@@ -165,7 +169,8 @@
             ctx.textAlign = "center";
             ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
             ctx.font = "25px Arial";
-            ctx.fillText("You got nuked by Andreas!", canvas.width / 2, canvas.height / 2 + 40);
+            ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2 + 40);
+            ctx.fillText("Click to Restart", canvas.width / 2, canvas.height / 2 + 80);
 
             canvas.addEventListener("click", () => location.reload());
         }
@@ -173,6 +178,12 @@
         function updateRocket() {
             if (moveLeft && rocket.x > 0) rocket.x -= rocket.speed;
             if (moveRight && rocket.x + rocket.width < canvas.width) rocket.x += rocket.speed;
+        }
+
+        function drawScore() {
+            ctx.fillStyle = "white";
+            ctx.font = "30px Arial";
+            ctx.fillText(`Score: ${score}`, 20, 40);
         }
 
         function gameLoop() {
@@ -183,9 +194,11 @@
             drawRocket();
             updateAsteroids();
             checkCollisions();
+            drawScore();
             for (let asteroid of asteroids) {
                 drawAsteroid(asteroid);
             }
+            score++;  // 🏆 Increase score over time
             requestAnimationFrame(gameLoop);
         }
 
@@ -197,17 +210,6 @@
         document.addEventListener("keyup", (event) => {
             if (event.key === "ArrowLeft") moveLeft = false;
             if (event.key === "ArrowRight") moveRight = false;
-        });
-
-        canvas.addEventListener("touchstart", (event) => {
-            let touchX = event.touches[0].clientX;
-            moveLeft = touchX < canvas.width / 2;
-            moveRight = touchX > canvas.width / 2;
-        });
-
-        canvas.addEventListener("touchend", () => {
-            moveLeft = false;
-            moveRight = false;
         });
 
         createStars();
